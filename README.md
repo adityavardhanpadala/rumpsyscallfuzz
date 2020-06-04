@@ -1,6 +1,6 @@
 # My Setup
 
-notes on [adityapadala.com](adityapadala.com)
+notes on [adityapadala.com](https://adityapadala.com)
 
 - Setup a NetBSD installation as detailed here [https://adityapadala.com/2020/04/20/Setting-Up-NetBSD-Kernel-Dev-Environment/](https://adityapadala.com/2020/04/20/Setting-Up-NetBSD-Kernel-Dev-Environment/)
 - Now fetch the sources in the vm from either CVS or git.
