@@ -10,7 +10,7 @@ cvs checkout -A -P src
 (or)
 git clone https://github.com/NetBSD/src
 ```
-- Build the distribution with fuzzer coverage.
+- Build the distribution with fuzzer coverage and required llvm toolchain.
 ```
 ./build.sh -j8 -N0 -U -u -V MAKECONF=/dev/null -V MKCOMPAT=no -V MKDEBUGLIB=yes -V MKDEBUG=yes -V MKSANITIZER=yes -V USE_SANITIZER=fuzzer-no-link -V MKLLVM=yes -V MKGCC=no -V HAVE_LLVM=yes -O ../destdir distribution
 ```
