@@ -6,10 +6,6 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
-#define SYSCALLS 10
-#define INTSYSCALLS 6
-#define INT2SYSCALLS 4
-
 int rump_syscall(int num, void *data, size_t dlen, register_t *retval);
 
 int val,val1,Initialized=0;
