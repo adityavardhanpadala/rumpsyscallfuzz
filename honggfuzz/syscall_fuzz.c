@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
+#include <inttypes.h>
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
@@ -47,7 +47,9 @@ LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 	memcpy(&args[0],Data, 8*sizeof(uint64_t));
 	
 	#ifdef DEBUG
-	printf("syscall_number: %d  args = [%lu, %lu, %lu, %lu, %lu, %lu, %lu ,%lu]", syscall_number, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+	FILE *fp = fopen("/tmp/crashlog.txt","w+");
+	fprintf(fp,"syscall_number: %"PRIu32"  args = [%"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64" ,%"PRIx64"]\n", syscall_number, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+	fclose(fp);
 	#endif
 
 	rump_syscall(syscall_number, &args, sizeof(args), retval);
