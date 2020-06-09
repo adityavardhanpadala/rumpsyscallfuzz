@@ -18,8 +18,17 @@ void Initialize()
 		__builtin_trap();
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
+int getsize()
 {
+	/*To Do*/
+	return 0;
+}
+
+int
+LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
+{
+	if (Size != 2 + 8 * sizeof(uint64_t))
+		  return 0;
 	if(!Initialized){
 		Initialize();
 		Initialized=1;
@@ -31,7 +40,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 	Data += 2;
 	Size -= 2;
 	
-
 	uint64_t args[8];
 	memcpy(&args[0],Data, 8*sizeof(uint64_t));
 	
