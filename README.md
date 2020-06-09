@@ -18,15 +18,6 @@ git clone https://github.com/NetBSD/src
 ```
 cd /usr && cvs -q -z2 -d anoncvs@anoncvs.NetBSD.org:/cvsroot checkout -P pkgsrc
 ```
-- Install LLVM-toolchain
-```
-git clone https://github.com/llvm/llvm-project
-cd llvm-project
-mkdir build
-cd build
-cmake -G ninja DLLVM_ENABLE_PROJECTS="clang;compiler-rt;clang-tools-extra;libcxx;libcxxabi" ../llvm
-ninja
-```
 
 - Install honggfuzz from pkgsrc in devel/honggfuzz
 ```
