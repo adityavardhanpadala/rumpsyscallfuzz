@@ -1,5 +1,8 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "copy.h"
+
 int raise(int num)
 {
 	exit(0);

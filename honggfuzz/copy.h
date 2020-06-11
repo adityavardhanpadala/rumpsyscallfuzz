@@ -2,6 +2,8 @@
 
 #define COPY_H
 
+#include <stdio.h>
+#include <inttypes.h>
 int raise(int num);
 int copyout(const void *kaddr, void *uaddr, size_t len);
 int copyin(const void *uaddr, void *kaddr, size_t len);
