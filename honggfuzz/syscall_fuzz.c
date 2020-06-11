@@ -20,6 +20,11 @@ void Initialize()
 		__builtin_trap();
 }
 
+int raise(int num)
+{
+	exit(0);
+}
+
 int getsize()
 {
 	/*To Do*/
@@ -40,6 +45,7 @@ LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 	uint16_t syscall_number;
 	memcpy(&syscall_number,Data,2);
 
+	uint16_t syscall_val = syscall_number & 511;
 	Data += 2;
 	Size -= 2;
 	
@@ -48,12 +54,14 @@ LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 	
 	#ifdef DEBUG
 	FILE *fp = fopen("/tmp/crashlog.txt","w+");
-	fprintf(fp,"syscall_number: %"PRIu32"  args = [%"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64", %"PRIx64" ,%"PRIx64"]\n", syscall_number, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+	fprintf(fp,"__syscall(%"PRIu32", \
+0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64" ,0x%"PRIx64")",\
+syscall_val, args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 	fclose(fp);
 	#endif
 
 	rump_syscall(syscall_number, &args, sizeof(args), retval);
-
+	
 	return 0;
 }
 /*
