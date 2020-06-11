@@ -25,6 +25,16 @@ int raise(int num)
 	exit(0);
 }
 
+int copyout(const void *kaddr, void *uaddr, size_t len) 
+{
+       	return 0;
+}
+int copyin(const void *uaddr, void *kaddr, size_t len) 
+{ 
+	memset(kaddr, 0, len); 
+	return 0; 
+}
+
 int getsize()
 {
 	/*To Do*/
