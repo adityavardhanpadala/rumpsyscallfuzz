@@ -11,7 +11,7 @@ cp syscall_fuzz.c /tmp
 chroot destdir.amd64/
 cd /tmp 
 
-hfuzz-clang -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofififs syscall_fuzz.c
+hfuzz-clang -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
 mkdir corpus
 honggfuzz -P -f corpus/ -- ./a.out 
 
