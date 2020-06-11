@@ -1,1 +1,0 @@
-cmake -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;compiler-rt" -DCMAKE_BUILD=Release -DCLANG_DEFAULT_CXX_STDLIB:STRING="libstdc++" -G Ninja ../llvm

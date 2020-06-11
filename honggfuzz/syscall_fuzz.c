@@ -37,7 +37,7 @@ void Initialize()
 	if(rump_init()!=0)
 		__builtin_trap();
 }
-
+/*
 int raise(int num)
 {
 	exit(0);
@@ -52,7 +52,7 @@ int copyin(const void *uaddr, void *kaddr, size_t len)
 	memset(kaddr, 0, len); 
 	return 0; 
 }
-
+*/
 int getsize()
 {
 	/*To Do*/
