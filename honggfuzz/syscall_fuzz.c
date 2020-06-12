@@ -63,10 +63,6 @@ rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
 	if (len == 0)
  		return 0;
 
- 	if (__predict_false(uaddr == NULL && len)) {
- 		return EFAULT;
- 	}
-
  	HF_MEMGET(kaddr, len);
 	
 	return error;
@@ -75,26 +71,13 @@ rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
 int
 rumpns_copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	int error = 0;
-	
-	if (len == 0)
-		return 0;
-
-	if (__predict_false(uaddr == NULL && len)){
-		return EFAULT;
-	}
-	
-	HF_MEMGET(uaddr, len);
-
-	return error;
+	return 0;
 }
 int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 	if (len == 0)
 		return EFAULT;
 
-	if (__predict_false(uaddr == NULL))
-		return EFAULT;
 	HF_MEMGET(kaddr, len-1);
 
 	((char*)kaddr)[len]=0;
@@ -106,20 +89,6 @@ int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 }
 int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
-
-	if (len == 0)
-		return 0;
-	if (__predict_false(uaddr == NULL && len)){
-		return EFAULT;
-	}
-
-	HF_MEMGET(uaddr, len-1);
-	
-	((char*)uaddr)[len]=0;
-
-	if (done)
-		done = strlen(uaddr) + 1;
-	
 	return 0;
 }
 
