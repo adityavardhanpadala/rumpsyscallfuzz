@@ -89,14 +89,10 @@ int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 }
 int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
-	size_t slen;
-	slen = strlen(kaddr) + 1;
-	
-	if(slen > len)
-		return ENAMETOOLONG;
+	len = MIN(strnlen(uaddr, len), len) + 1;
 
-	if(done)
-		done = slen;
+	if (done)
+		*done = len;
 	return 0;
 }
 
