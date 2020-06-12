@@ -22,9 +22,6 @@ honggfuzz -P -f corpus/ -- ./a.out
 #include <errno.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <sys/param.h>
-#include <sys/lwp.h>
-#include <sys/uio.h>
 #include <inttypes.h>
 #include <pthread.h>
 
