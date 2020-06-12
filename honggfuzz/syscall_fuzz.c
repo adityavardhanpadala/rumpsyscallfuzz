@@ -112,7 +112,7 @@ main(int argc, char **argv)
 #ifdef DEBUG
 	FILE *fp = fopen("/tmp/crashlog.txt","a+");
 	fprintf(fp,"__syscall(%#"PRIu32", %#"PRIx64", %#"PRIx64", %#"PRIx64", %#"PRIx64", \
-	       	%#"PRIx64", %#"PRIx64", %"PRIx64", %#"PRIx64")", syscall_val,  
+	       	%#"PRIx64", %#"PRIx64", %"PRIx64", %#"PRIx64")\n", syscall_val,  
 		       	args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 	fclose(fp);
 #endif
