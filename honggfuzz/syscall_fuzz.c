@@ -22,6 +22,9 @@ honggfuzz -P -f corpus/ -- ./a.out
 #include <errno.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/lwp.h>
 #include <inttypes.h>
 #include <pthread.h>
 
@@ -31,8 +34,11 @@ honggfuzz -P -f corpus/ -- ./a.out
 #define DEBUG 1
 
 int rump_syscall(int num, void *data, size_t dlen, register_t *retval);
+
 int Initialized=0;
+
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+
 extern void HF_ITER(uint8_t **buf, size_t *len);
 void HF_MEMGET(void *dst, size_t len);
 
@@ -44,26 +50,76 @@ void Initialize()
 		__builtin_trap();
 }
 
-int raise(int num)
+int
+raise(int num)
 {
 	exit(0);
 }
-int rumpns_copyout(const void *kaddr, void *uaddr, size_t len)
+int
+rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
 {
-	return 0;
+	int error = 0;
+
+	if (len == 0)
+ 		return 0;
+
+ 	if (__predict_false(uaddr == NULL && len)) {
+ 		return EFAULT;
+ 	}
+
+ 	HF_MEMGET(kaddr, len);
+	
+	return error;
 }
-int rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
+
+int
+rumpns_copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	memset(kaddr, 0, len);
-	return 0;
+	int error = 0;
+	
+	if (len == 0)
+		return 0;
+
+	if (__predict_false(uaddr == NULL && len)){
+		return EFAULT;
+	}
+	
+	HF_MEMGET(uaddr, len);
+
+	return error;
 }
 int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
-	memset(kaddr, 0, len);
+	if (len == 0)
+		return EFAULT;
+
+	if (__predict_false(uaddr == NULL))
+		return EFAULT;
+	HF_MEMGET(kaddr, len-1);
+
+	((char*)kaddr)[len]=0;
+
+	if (done)
+		done = strlen(kaddr) + 1;
+
 	return 0;
 }
 int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
+
+	if (len == 0)
+		return 0;
+	if (__predict_false(uaddr == NULL && len)){
+		return EFAULT;
+	}
+
+	HF_MEMGET(uaddr, len-1);
+	
+	((char*)uaddr)[len]=0;
+
+	if (done)
+		done = strlen(uaddr) + 1;
+	
 	return 0;
 }
 
@@ -100,24 +156,25 @@ main(int argc, char **argv)
 		Initialize();
 		Initialized=1;
 	}
-	register_t retval[2];
-	uint16_t syscall_number;
-	HF_MEMGET(&syscall_number, 2);
+	for(;;){
+		register_t retval[2];
+		uint16_t syscall_number;
+		HF_MEMGET(&syscall_number, 2);
 
-	uint16_t syscall_val = syscall_number & 511;
+		uint16_t syscall_val = syscall_number & 511;
 	
-	uint64_t args[8];
-	HF_MEMGET(&args[0], 8*sizeof(uint64_t));
+		uint64_t args[8];
+		HF_MEMGET(&args[0], 8*sizeof(uint64_t));
 	
 #ifdef DEBUG
-	FILE *fp = fopen("/tmp/crashlog.txt","a+");
-	fprintf(fp,"__syscall(%#"PRIu32", %#"PRIx64", %#"PRIx64", %#"PRIx64", %#"PRIx64", \
-	       	%#"PRIx64", %#"PRIx64", %"PRIx64", %#"PRIx64")\n", syscall_val,  
-		       	args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-	fclose(fp);
+		FILE *fp = fopen("/tmp/crashlog.txt","a+");
+		fprintf(fp,"__syscall(%"PRIu32", %#"PRIx64", %#"PRIx64", %#"PRIx64", %#"PRIx64", \
+			%#"PRIx64", %#"PRIx64", %"PRIx64", %#"PRIx64")\n", syscall_val,  
+		       		args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+		fclose(fp);
 #endif
 
-	rump_syscall(syscall_number, &args, sizeof(args), retval);
-	
+		rump_syscall(syscall_number, &args, sizeof(args), retval);
+	}
 	return 0;
 }
