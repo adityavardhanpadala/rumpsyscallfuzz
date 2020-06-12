@@ -1,6 +1,6 @@
 /*
  * hfuzz-clang -fPIC -shared copy.c -o copy.so
- * honnggfuzz -E LD_PRELOAD=/path/to/copy.so -P -f corpus -- ./fuzzer
+ * honggfuzz -E LD_PRELOAD=/path/to/copy.so -P -f corpus -- ./fuzzer
  *
  */
 #include <stdio.h>
