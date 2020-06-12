@@ -80,7 +80,7 @@ int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 
 	HF_MEMGET(kaddr, len-1);
 
-	((char*)kaddr)[len]=0;
+	((char*)kaddr)[len-1]=0;
 
 	if (done)
 		done = strlen(kaddr) + 1;
@@ -89,6 +89,14 @@ int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 }
 int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
+	size_t slen;
+	slen = strlen(kaddr) + 1;
+	
+	if(slen > len)
+		return ENAMETOOLONG;
+
+	if(done)
+		done = slen;
 	return 0;
 }
 
