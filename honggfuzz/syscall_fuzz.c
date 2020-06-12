@@ -21,6 +21,7 @@ honggfuzz -P -f corpus/ -- ./a.out
 #include <string.h>
 #include <sys/types.h>
 #include <inttypes.h>
+#include <pthread.h>
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
@@ -28,7 +29,12 @@ honggfuzz -P -f corpus/ -- ./a.out
 
 int rump_syscall(int num, void *data, size_t dlen, register_t *retval);
 
-int val,val1,Initialized=0;
+int Initialized=0;
+
+static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+
+extern void HF_ITER(uint8_t **buf, size_t *len);
+void HF_MEMGET(void *dst, size_t len);
 
 static
 void Initialize()
@@ -53,32 +59,50 @@ int copyin(const void *uaddr, void *kaddr, size_t len)
 	return 0; 
 }
 */
-int getsize()
+
+void
+HF_MEMGET(void *dst, size_t len)
 {
-	/*To Do*/
-	return 0;
+    static uint8_t *buf;
+    static size_t buflen;
+    size_t diff;
+
+    if (len == 0)
+       return;
+
+    pthread_mutex_lock(&mtx);
+    do {
+        if (buflen == 0) {
+            HF_ITER(&buf, &buflen);
+            continue;
+        }
+        diff = MIN(buflen, len);
+        memcpy(dst, buf, diff);
+        buf += diff;
+        buflen -= diff;
+        dst += diff;
+        len -= diff;
+    } while (len > 0);
+    pthread_mutex_unlock(&mtx);
 }
 
 int
 LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 {
-	if (Size != 2 + 8 * sizeof(uint64_t))
-		  return 0;
-	
 	if(!Initialized){
 		Initialize();
 		Initialized=1;
 	}
 	register_t retval[2];
 	uint16_t syscall_number;
-	memcpy(&syscall_number,Data,2);
+	HF_MEMGET(&syscall_number, 2);
 
 	uint16_t syscall_val = syscall_number & 511;
 	Data += 2;
 	Size -= 2;
 	
 	uint64_t args[8];
-	memcpy(&args[0],Data, 8*sizeof(uint64_t));
+	HF_MEMGET(&args[0], 8*sizeof(uint64_t));
 	
 	#ifdef DEBUG
 	FILE *fp = fopen("/tmp/crashlog.txt","w+");
