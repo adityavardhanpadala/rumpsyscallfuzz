@@ -19,20 +19,23 @@ honggfuzz -P -f corpus/ -- ./a.out
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/lwp.h>
+#include <sys/uio.h>
 #include <inttypes.h>
 #include <pthread.h>
+
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
 #define DEBUG 1
 
 int rump_syscall(int num, void *data, size_t dlen, register_t *retval);
-
 int Initialized=0;
-
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
-
 extern void HF_ITER(uint8_t **buf, size_t *len);
 void HF_MEMGET(void *dst, size_t len);
 
@@ -43,22 +46,29 @@ void Initialize()
 	if(rump_init()!=0)
 		__builtin_trap();
 }
-/*
+
 int raise(int num)
 {
 	exit(0);
 }
-
-int copyout(const void *kaddr, void *uaddr, size_t len) 
+int rumpns_copyout(const void *kaddr, void *uaddr, size_t len)
 {
-       	return 0;
+	return 0;
 }
-int copyin(const void *uaddr, void *kaddr, size_t len) 
-{ 
-	memset(kaddr, 0, len); 
-	return 0; 
+int rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
+{
+	memset(kaddr, 0, len);
+	return 0;
 }
-*/
+int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+{
+	memset(kaddr, 0, len);
+	return 0;
+}
+int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
+{
+	return 0;
+}
 
 void
 HF_MEMGET(void *dst, size_t len)
@@ -87,7 +97,7 @@ HF_MEMGET(void *dst, size_t len)
 }
 
 int
-LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
+main(int argc, char **argv)
 {
 	if(!Initialized){
 		Initialize();
@@ -98,33 +108,19 @@ LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 	HF_MEMGET(&syscall_number, 2);
 
 	uint16_t syscall_val = syscall_number & 511;
-	Data += 2;
-	Size -= 2;
 	
 	uint64_t args[8];
 	HF_MEMGET(&args[0], 8*sizeof(uint64_t));
 	
-	#ifdef DEBUG
-	FILE *fp = fopen("/tmp/crashlog.txt","w+");
-	fprintf(fp,"__syscall(%"PRIu32", \
-0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64", 0x%"PRIx64" ,0x%"PRIx64")",\
-syscall_val, args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+#ifdef DEBUG
+	FILE *fp = fopen("/tmp/crashlog.txt","a+");
+	fprintf(fp,"__syscall(%#"PRIu32", %#"PRIx64", %#"PRIx64", %#"PRIx64", %#"PRIx64", \
+	       	%#"PRIx64", %#"PRIx64", %"PRIx64", %#"PRIx64")", syscall_val,  
+		       	args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 	fclose(fp);
-	#endif
+#endif
 
 	rump_syscall(syscall_number, &args, sizeof(args), retval);
 	
 	return 0;
 }
-/*
-int main()
-{
-	rump_init();
-	char *buf = "aaaa";
-	register_t retval[2];
-	printf("%d--%d\n",retval[0],retval[1]);
-	rump_syscall(3,buf,10,retval);
-	printf("%d--%d\n",retval[0],retval[1]);
-	return 0;
-}
-*/
