@@ -1,17 +1,20 @@
 /*
 build instructions:
 
-mount -t null /dev destdir.amd64/dev
-mount -t null /dev/pts destdir.amd64/dev/pts
-mount -t null /tmp destdir.amd64/tmp
-mkdir destdir.amd64/usr/pkg
-mount -t null /usr/pkg destdir.amd64/usr/pkg
+./build.sh -j8 -N0 -U -u -V MAKECONF=/dev/null -V MKCOMPAT=no -V MKDEBUGLIB=yes -V MKDEBUG=yes -V MKSANITIZER=yes -V MKLIBCSANITIZER=yes -V USE_SANITIZER=fuzzer-no-link,address -V MKLLVM=yes -V MKGCC=no -V HAVE_LLVM=yes -O /public/netbsd.fuzzer distribution
+
+mount -t null /dev /public/netsbd.fuzzer/destdir.amd64/dev
+mount -t null /dev/pts /public/netbsd.fuzzer/destdir.amd64/dev/pts
+mount -t null /tmp /public/netbsd.fuzzer/destdir.amd64/tmp
+mkdir /public/netbsd.fuzzer/destdir.amd64/usr/pkg
+mount -t null /usr/pkg /public/netbsd.fuzzer/destdir.amd64/usr/pkg
 
 cp syscall_fuzz.c /tmp
 chroot destdir.amd64/
-cd /tmp 
+cd /tmp
 
-hfuzz-clang -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
+ASAN_OPTIONS=detect_container_overflow=0 hfuzz-clang -fsanitize=address,undefined -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
+
 mkdir corpus
 honggfuzz -P -f corpus/ -- ./a.out 
 
@@ -27,6 +30,7 @@ honggfuzz -P -f corpus/ -- ./a.out
 #include <sys/lwp.h>
 #include <inttypes.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
