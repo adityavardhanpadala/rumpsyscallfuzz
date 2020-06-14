@@ -13,10 +13,14 @@ cp syscall_fuzz.c /tmp
 chroot destdir.amd64/
 cd /tmp
 
+- Set detect_container_overflow=0 to suppress container overflow errors.
+
+- Set LIBC_UBSAN=a to abort on error.
+
 ASAN_OPTIONS=detect_container_overflow=0 hfuzz-clang -fsanitize=address,undefined -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
 
 mkdir corpus
-honggfuzz -P -f corpus/ -- ./a.out 
+honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out 
 
 */
 #include <stdio.h>
