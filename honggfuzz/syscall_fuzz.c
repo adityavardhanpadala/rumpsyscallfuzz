@@ -32,19 +32,31 @@ honggfuzz -P -f corpus/ -- ./a.out
 #include <pthread.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+#ifdef __cplusplus
+}
+#endif
 
 #define DEBUG 1
 
-int rump_syscall(int num, void *data, size_t dlen, register_t *retval);
+#ifdef __cplusplus
+#define  EXTERN extern "C"
+#else
+#define EXTERN
+#endif
+
+EXTERN int rump_syscall(int num, void *data, size_t dlen, register_t *retval);
 
 int Initialized=0;
 
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
-extern void HF_ITER(uint8_t **buf, size_t *len);
-void HF_MEMGET(void *dst, size_t len);
+EXTERN void HF_ITER(uint8_t **buf, size_t *len);
+EXTERN void HF_MEMGET(void *dst, size_t len);
 
 static
 void Initialize()
@@ -54,12 +66,13 @@ void Initialize()
 		__builtin_trap();
 }
 
-int
+EXTERN int
 raise(int num)
 {
 	exit(0);
 }
-int
+
+EXTERN int
 rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	int error = 0;
@@ -68,17 +81,30 @@ rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
  		return 0;
 
  	HF_MEMGET(kaddr, len);
-	
+
+#ifdef DEBUG
+        FILE *fp = fopen("/tmp/crashlog.txt.0","a+");
+        fprintf(fp,"copyin: len=%zu buf=0x", len);
+        for (size_t i = 0; i < len; i++)
+                fprintf(fp,"%02x", (unsigned char)((char*)kaddr)[i]);
+        fprintf(fp,"\n");
+        fclose(fp);
+#endif
+
 	return error;
 }
 
-int
+EXTERN int
 rumpns_copyout(const void *kaddr, void *uaddr, size_t len)
 {
 	return 0;
 }
-int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+
+EXTERN int
+rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
+	size_t size;
+
 	if (len == 0)
 		return EFAULT;
 
@@ -86,12 +112,23 @@ int rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 
 	((char*)kaddr)[len-1]=0;
 
+	size = strlen(kaddr) + 1;
 	if (done)
-		*done = strlen(kaddr) + 1;
+		*done = size;
+
+#ifdef DEBUG
+        FILE *fp = fopen("/tmp/crashlog.txt.1","a+");
+        fprintf(fp,"copyinstr: len=%zu buf=0x", strlen((char *)kaddr) + 1);
+        for (size_t i = 0; i < size; i++)
+                fprintf(fp,"%02x", (unsigned char)((char*)kaddr)[i]);
+        fprintf(fp,"\n");
+        fclose(fp);
+#endif
 
 	return 0;
 }
-int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
+EXTERN int
+rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	len = MIN(strnlen(uaddr, len), len) + 1;
 
@@ -100,7 +137,7 @@ int rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	return 0;
 }
 
-void
+EXTERN void
 HF_MEMGET(void *dst, size_t len)
 {
     static uint8_t *buf;
@@ -124,6 +161,12 @@ HF_MEMGET(void *dst, size_t len)
         len -= diff;
     } while (len > 0);
     pthread_mutex_unlock(&mtx);
+
+#ifdef DEBUG
+        FILE *fp = fopen("/tmp/crashlog.txt.x","a+");
+        fprintf(fp,"HF_GET: dst=%p len=%zu\n", dst, len);
+        fclose(fp);
+#endif
 }
 
 int
@@ -368,6 +411,13 @@ main(int argc, char **argv)
                         rumpified = false;
 			break;
                 }
+
+#ifdef DEBUG
+                FILE *fp1 = fopen("/tmp/crashlog.txt.2","a+");
+                fprintf(fp1,"SYSNO: %u rumpified=%s\n", syscall_val, rumpified ? "yes" : "no");
+                fclose(fp1);
+#endif
+
                 if (!rumpified)
                         continue;
 		
@@ -375,7 +425,7 @@ main(int argc, char **argv)
 		HF_MEMGET(&args[0], 8*sizeof(uint64_t));
 	
 #ifdef DEBUG
-		FILE *fp = fopen("/tmp/crashlog.txt","a+");
+		FILE *fp = fopen("/tmp/crashlog.txt.3","a+");
 		fprintf(fp,"__syscall(%" PRIu32 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", \
 			%#" PRIx64 ", %#" PRIx64 ", %" PRIx64 ", %#" PRIx64 ")\n", syscall_val,  
 		       		args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
