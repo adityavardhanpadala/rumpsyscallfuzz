@@ -21,8 +21,7 @@ cd /tmp
 
 ASAN_OPTIONS=detect_container_overflow=0 clang -fsanitize=fuzzer,address -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
 
-mkdir corpus
-honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out 
+./a.out
 
 */
 #include <stdio.h>
