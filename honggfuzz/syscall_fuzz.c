@@ -3,6 +3,8 @@ build instructions:
 
 ./build.sh -j8 -N0 -U -u -V MAKECONF=/dev/null -V MKCOMPAT=no -V MKDEBUGLIB=yes -V MKDEBUG=yes -V MKSANITIZER=yes -V MKLIBCSANITIZER=yes -V USE_SANITIZER=fuzzer-no-link,address -V MKLLVM=yes -V MKGCC=no -V HAVE_LLVM=yes -O /public/netbsd.fuzzer distribution
 
+- add -static to COMMON_CFLAGS in Makefile and build honggfuzz
+
 mount -t null /dev /public/netsbd.fuzzer/destdir.amd64/dev
 mount -t null /dev/pts /public/netbsd.fuzzer/destdir.amd64/dev/pts
 mount -t null /tmp /public/netbsd.fuzzer/destdir.amd64/tmp
@@ -45,7 +47,7 @@ extern "C" {
 }
 #endif
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifdef __cplusplus
 #define  EXTERN extern "C"
