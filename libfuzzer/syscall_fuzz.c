@@ -19,7 +19,7 @@ cd /tmp
 
 - Set LIBC_UBSAN=a to abort on error.
 
-ASAN_OPTIONS=detect_container_overflow=0 hfuzz-clang -fsanitize=address -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
+ASAN_OPTIONS=detect_container_overflow=0 clang -fsanitize=fuzzer,address -lrump -lrumpdev -lrumpvfs -lrumpvfs_nofifofs syscall_fuzz.c
 
 mkdir corpus
 honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out 
