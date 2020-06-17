@@ -29,6 +29,8 @@ honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +75,7 @@ EXTERN void HF_MEMGET(void *dst, size_t len);
 int sockfd;
 struct sockaddr_in server_address;
 struct ufs_args args;
-FILE *fparr;
+int fparr;
 
 static
 void Initialize()
@@ -81,6 +83,8 @@ void Initialize()
 	// Initialise the rumpkernel only once.
 	if(rump_init()!=0)
 		__builtin_trap();
+	
+      	fparr = open("/tmp/tmpfile", O_APPEND);
 
 }
 
@@ -187,16 +191,15 @@ HF_MEMGET(void *dst, size_t len)
 #endif
 }
 
-void setfp()
+void setfp(int syscall_val)
 {
 	char buf[100];
 	HF_MEMGET(&buf[0], 90);
 	int i = 0, len = strlen(buf);
-      	fparr = fopen("/tmp/tmpfile", "wb");
-	fprintf(fparr, "%s\n" , buf);
-	fclose(fparr);
+	write(fparr, buf, sizeof(buf));
 #ifdef DEBUG
         FILE *fp = fopen("/tmp/fplog.txt","a+");
+	fprintf(fp,"%d --- ",syscall_val);
         for (size_t i = 0; i < 100; i++)
                 fprintf(fp,"%02x", (unsigned char)((char*)buf)[i]);
         fprintf(fp,"\n");
@@ -224,13 +227,33 @@ main(int argc, char **argv)
 		bool rumpified;
                 switch (syscall_val) {
                 case 3:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 4:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 5:
+			rumpified = true;
+			break;
                 case 6:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 9:
                 case 10:
                 case 12:
+			rumpified = true;
+			break;
                 case 13:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 14:
                 case 15:
                 case 16:
@@ -247,17 +270,35 @@ main(int argc, char **argv)
                 case 32:
                 case 33:
                 case 34:
+			rumpified = true;
+			break;
                 case 35:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 36:
                 case 39:
+			rumpified = true;
+			break;
                 case 41:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 42:
                 case 43:
                 case 45:
                 case 47:
                 case 49:
                 case 50:
+			rumpified = true;
+			break;
                 case 54:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 56:
                 case 57:
                 case 58:
@@ -268,7 +309,13 @@ main(int argc, char **argv)
                 case 81:
                 case 82:
                 case 90:
+			rumpified = true;
+			break;
                 case 92:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 93:
                 case 95:
                 case 98:
@@ -276,14 +323,28 @@ main(int argc, char **argv)
                 case 105:
                 case 106:
                 case 118:
+			rumpified=true;
+			break;
                 case 120:
                 case 121:
                 case 123:
+			rumpified = true;
+			break;
                 case 124:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 126:
                 case 127:
                 case 128:
+			rumpified = true;
+			break;
                 case 131:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 132:
                 case 133:
                 case 134:
@@ -293,8 +354,14 @@ main(int argc, char **argv)
                 case 138:
                 case 147:
                 case 155:
+			rumpified=true;
+			break;
                 case 173:
                 case 174:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 181:
                 case 182:
                 case 183:
@@ -303,11 +370,29 @@ main(int argc, char **argv)
                 case 193:
                 case 194:
                 case 195:
+			rumpified = true;
+			break;
                 case 199:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 200:
+			rumpified = true;
+			break;
                 case 201:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 202:
+			rumpified = true;
+			break;
                 case 206:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 207:
                 case 208:
                 case 209:
@@ -343,7 +428,13 @@ main(int argc, char **argv)
                 case 305:
                 case 306:
                 case 344:
+			rumpified = true;
+			break;
                 case 345:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 354:
                 case 360:
                 case 361:
@@ -407,7 +498,13 @@ main(int argc, char **argv)
                 case 437:
                 case 438:
                 case 439:
+			rumpified = true;
+			break;
                 case 440:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 441:
                 case 446:
                 case 447:
@@ -417,7 +514,14 @@ main(int argc, char **argv)
                 case 454:
                 case 455:
                 case 456:
+			rumpified = true;
+			break;
                 case 457:
+			//args[3]=fparr2
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 458:
                 case 459:
                 case 460:
@@ -432,15 +536,33 @@ main(int argc, char **argv)
                 case 470:
                 case 471:
                 case 472:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 473:
                 case 475:
                 case 476:
+			rumpified = true;
+			break;
                 case 477:
+			rumpified = true;
+			break;
                 case 479:
                 case 480:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 483:
                 case 484:
+			rumpified = true;
+			break;
                 case 485:
+			setfp(syscall_val);
+			args[0]=fparr;
+			rumpified = true;
+			break;
                 case 486:
                 case 499:
                         rumpified = true;
