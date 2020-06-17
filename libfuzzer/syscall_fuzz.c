@@ -135,8 +135,9 @@ void
 getData(uint8_t **buf, size_t *len)
 {
 
-	if(strlen(gData) < *len)
-		exit(0);
+
+	if(strlen(*buf) < *len)
+		return;
 	else{
 		memcpy(buf, gData, *len);
 		gData += *len;
@@ -178,7 +179,7 @@ HF_MEMGET(void *dst, size_t len)
 
 
 int
-LLVMFuzzerTestInput(const uint8_t *Data, size_t Size)
+LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 {
 	gData = Data;
 	if(!Initialized){

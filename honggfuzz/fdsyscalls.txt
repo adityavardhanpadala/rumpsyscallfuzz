@@ -1,0 +1,118 @@
+3 -- rump___sysimpl_read(int fd, void * buf, size_t nbyte)
+
+4 -- rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
+ 
+6 -- rump___sysimpl_close(int fd)
+
+13 -- rump___sysimpl_fchdir(int fd)
+
+35 -- rump___sysimpl_fchflags(int fd, u_long flags)
+
+41 -- rump___sysimpl_dup(int fd)
+
+54 -- rump___sysimpl_ioctl(int fd, u_long com, void * data)
+
+92 -- rump___sysimpl_fcntl(int fd, int cmd, void * arg)
+
+95 -- rump___sysimpl_fsync(int fd)
+
+120 -- rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
+
+121 -- rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
+
+rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
+
+rump___sysimpl_fchmod(int fd, mode_t mode)
+
+rump___sysimpl_flock(int fd, int how)
+
+rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
+
+rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
+
+rump___sysimpl_fpathconf(int fd, int name)
+
+rump___sysimpl_lseek(int fd, off_t offset, int whence)
+
+rump___sysimpl_ftruncate(int fd, off_t length)
+
+rump___sysimpl_futimes(int fd, const struct timeval * tptr)
+
+rump___sysimpl_fdatasync(int fd)
+
+rump___sysimpl___posix_fchown(int fd, uid_t uid, gid_t gid)
+
+rump___sysimpl_fktrace(int fd, int ops, int facs, pid_t pid)
+
+rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offset)
+
+rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offset)
+
+rump___sysimpl_fchroot(int fd)
+
+rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges, struct kevent * eventlist, size_t nevents, const struct timespec * timeout)
+
+rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
+
+rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, const void * data, size_t nbytes)
+
+rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, void * data, size_t nbytes)
+
+rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrname)
+
+rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nbytes)
+
+rump___sysimpl_fsetxattr(int fd, const char * name, const void * value, size_t size, int flags)
+
+rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
+
+rump___sysimpl_flistxattr(int fd, char * list, size_t size)
+
+rump___sysimpl_fremovexattr(int fd, const char * name)
+
+rump___sysimpl_fstat30(int fd, struct stat * sb)
+
+rump___sysimpl_getdents30(int fd, char * buf, size_t count)
+
+rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
+
+rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
+
+rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchanges, struct kevent * eventlist, size_t nevents, const struct timespec * timeout)
+
+rump___sysimpl_fstat50(int fd, struct stat * sb)
+
+rump___sysimpl_linkat(int fd1, const char * name1, int fd2, const char * name2, int flags)
+
+rump___sysimpl_mkfifoat(int fd, const char * path, mode_t mode)
+
+rump___sysimpl_mknodat(int fd, const char * path, mode_t mode, dev_t dev)
+
+rump___sysimpl_mkdirat(int fd, const char * path, mode_t mode)
+
+rump___sysimpl_faccessat(int fd, const char * path, int amode, int flag)
+
+rump___sysimpl_fchmodat(int fd, const char * path, mode_t mode, int flag)
+
+rump___sysimpl_fchownat(int fd, const char * path, uid_t owner, gid_t group, int flag)
+
+rump___sysimpl_fstatat(int fd, const char * path, struct stat * buf, int flag)
+
+rump___sysimpl_utimensat(int fd, const char * path, const struct timespec * tptr, int flag)
+
+rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
+
+rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
+
+rump___sysimpl_symlinkat(const char * path1, int fd, const char * path2)
+
+rump___sysimpl_unlinkat(int fd, const char * path, int flag)
+
+rump___sysimpl_futimens(int fd, const struct timespec * tptr)
+
+rump___sysimpl_posix_fallocate(int fd, off_t pos, off_t len)
+
+rump___sysimpl_fdiscard(int fd, off_t pos, off_t len)
+
+rump___sysimpl_fstatvfs190(int fd, struct statvfs * buf, int flags)
+
