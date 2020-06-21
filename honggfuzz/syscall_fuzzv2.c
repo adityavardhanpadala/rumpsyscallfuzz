@@ -75,34 +75,44 @@ EXTERN void HF_MEMGET(void *dst, size_t len);
 int sockfd;
 struct sockaddr_in server_address;
 struct ufs_args args;
-int fparr;
+int fdarr[0xff];
 
 static
 void Initialize()
 {
-	// Initialise the rumpkernel only once.
-	if(rump_init()!=0)
-		__builtin_trap();
-	
-      	fparr = open("/tmp/tmpfile", O_APPEND);
-
+        // Initialise the rumpkernel only once.
+        if(rump_init()!=0)
+                __builtin_trap();
+        
+        // Open file and fill with random from HF_MEMGET()
+        int fd;
+        char *buf[2000];
+        fd = rump_sys_open("/tmp/tmpfile",O_RDWR|O_CREAT);
+        HF_MEMGET(&buf,1999);
+        rump_sys_write(fd,buf,sizeof(buf));
+        rump_sys_close(fd);
+        
+        //Initialize 0xff fd
+        for (size_t i = 0; i < 0xff; i++) 
+                fdarr[i] = rump_sys_open("/tmp/tmpfile",O_RDWR|O_CREAT);
 }
 
 EXTERN int
+		printf("here -- -- - -- - --  %x",syscall_number);
 raise(int num)
 {
-	exit(0);
+        exit(0);
 }
 
 EXTERN int
 rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
 {
-	int error = 0;
+        int error = 0;
 
-	if (len == 0)
- 		return 0;
+        if (len == 0)
+                return 0;
 
- 	HF_MEMGET(kaddr, len);
+        HF_MEMGET(kaddr, len);
 
 #ifdef DEBUG
         FILE *fp = fopen("/tmp/crashlog.txt.0","a+");
@@ -113,30 +123,30 @@ rumpns_copyin(const void *uaddr, void *kaddr, size_t len)
         fclose(fp);
 #endif
 
-	return error;
+        return error;
 }
 
 EXTERN int
 rumpns_copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	return 0;
+        return 0;
 }
 
 EXTERN int
 rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
-	size_t size;
+        size_t size;
 
-	if (len == 0)
-		return EFAULT;
+        if (len == 0)
+                return EFAULT;
 
-	HF_MEMGET(kaddr, len-1);
+        HF_MEMGET(kaddr, len-1);
 
-	((char*)kaddr)[len-1]=0;
+        ((char*)kaddr)[len-1]=0;
 
-	size = strlen(kaddr) + 1;
-	if (done)
-		*done = size;
+        size = strlen(kaddr) + 1;
+        if (done)
+                *done = size;
 
 #ifdef DEBUG
         FILE *fp = fopen("/tmp/crashlog.txt.1","a+");
@@ -147,16 +157,16 @@ rumpns_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
         fclose(fp);
 #endif
 
-	return 0;
+        return 0;
 }
 EXTERN int
 rumpns_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
-	len = MIN(strnlen(uaddr, len), len) + 1;
+        len = MIN(strnlen(uaddr, len), len) + 1;
 
-	if (done)
-		*done = len;
-	return 0;
+        if (done)
+                *done = len;
+        return 0;
 }
 
 EXTERN void
@@ -191,69 +201,57 @@ HF_MEMGET(void *dst, size_t len)
 #endif
 }
 
-void setfp(int syscall_val)
-{
-	char buf[100];
-	HF_MEMGET(&buf[0], 90);
-	int i = 0, len = strlen(buf);
-	write(fparr, buf, sizeof(buf));
-#ifdef DEBUG
-        FILE *fp = fopen("/tmp/fplog.txt","a+");
-	fprintf(fp,"%d --- ",syscall_val);
-        for (size_t i = 0; i < 100; i++)
-                fprintf(fp,"%02x", (unsigned char)((char*)buf)[i]);
-        fprintf(fp,"\n");
-        fclose(fp);
-#endif
-}
 
 int
 main(int argc, char **argv)
 {
-	if(!Initialized){
-		Initialize();
-		Initialized=1;
-	}
-	for(;;){
-		register_t retval[2];
-		uint16_t syscall_number;
-		HF_MEMGET(&syscall_number, 2);
+        if(!Initialized){
+                Initialize();
+                Initialized=1;
+        }
+        for(;;){
+                register_t retval[2];
+                uint16_t syscall_number;
+                HF_MEMGET(&syscall_number, 2);
 
-		uint16_t syscall_val = syscall_number & 511;
-	
-		uint64_t args[8];
-		HF_MEMGET(&args[0], 8*sizeof(uint64_t));
-		
+                uint16_t syscall_val = syscall_number & 511;
+        
+                uint64_t args[8];
+                HF_MEMGET(&args[0], 8*sizeof(uint64_t));
+                //Select file descriptor and seek to a random offset.
+		int rval;
+		char *temp;
+	       	HF_MEMGET(temp,1);
+		rval = (int)temp;
+		int seek_val = random() % 0x7d0;
+                rump_sys_lseek(fdarr[rval],seek_val,SEEK_SET);
+                
 		bool rumpified;
                 switch (syscall_val) {
-                case 3:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
-                case 4:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
-                case 5:
-			rumpified = true;
-			break;
-                case 6:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                case 3: /*SYS_read*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
+                case 4:/*SYS_write*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
+                case 5:/*SYS_open*/
+                        rumpified = true;
+                        break;
+                case 6:/*SYS_close*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 9:
                 case 10:
-                case 12:
-			rumpified = true;
-			break;
-                case 13:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                case 12:/*SYS_chdir*/
+                        rumpified = true;
+                        break;
+                case 13:/*SYS_fchdir*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 14:
                 case 15:
                 case 16:
@@ -270,35 +268,32 @@ main(int argc, char **argv)
                 case 32:
                 case 33:
                 case 34:
-			rumpified = true;
-			break;
-                case 35:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 35:/*SYS_chflags*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 36:
                 case 39:
-			rumpified = true;
-			break;
-                case 41:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 41:/*SYS_dup*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 42:
                 case 43:
                 case 45:
                 case 47:
                 case 49:
                 case 50:
-			rumpified = true;
-			break;
-                case 54:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 54:/*SYS_ioctl*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 56:
                 case 57:
                 case 58:
@@ -309,13 +304,12 @@ main(int argc, char **argv)
                 case 81:
                 case 82:
                 case 90:
-			rumpified = true;
-			break;
-                case 92:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 92:/*SYS_fcntl*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 93:
                 case 95:
                 case 98:
@@ -323,28 +317,26 @@ main(int argc, char **argv)
                 case 105:
                 case 106:
                 case 118:
-			rumpified=true;
-			break;
+                        rumpified=true;
+                        break;
                 case 120:
                 case 121:
                 case 123:
-			rumpified = true;
-			break;
-                case 124:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 124:/*SYS_fchmod*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 126:
                 case 127:
                 case 128:
-			rumpified = true;
-			break;
-                case 131:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 131:/*SYS_flock*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 132:
                 case 133:
                 case 134:
@@ -354,14 +346,13 @@ main(int argc, char **argv)
                 case 138:
                 case 147:
                 case 155:
-			rumpified=true;
-			break;
+                        rumpified=true;
+                        break;
                 case 173:
-                case 174:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                case 174:/*SYS_pwrite*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 181:
                 case 182:
                 case 183:
@@ -370,29 +361,26 @@ main(int argc, char **argv)
                 case 193:
                 case 194:
                 case 195:
-			rumpified = true;
-			break;
-                case 199:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 199:/*SYS_lseek*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 200:
-			rumpified = true;
-			break;
-                case 201:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 201:/*SYS_truncate*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 202:
-			rumpified = true;
-			break;
-                case 206:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 206:/*SYS_compat_50_futimes*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 207:
                 case 208:
                 case 209:
@@ -428,13 +416,12 @@ main(int argc, char **argv)
                 case 305:
                 case 306:
                 case 344:
-			rumpified = true;
-			break;
-                case 345:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 345:/*SYS_compat_50_kevent*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 354:
                 case 360:
                 case 361:
@@ -498,13 +485,12 @@ main(int argc, char **argv)
                 case 437:
                 case 438:
                 case 439:
-			rumpified = true;
-			break;
-                case 440:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 440:/*SYS_fstat50*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 441:
                 case 446:
                 case 447:
@@ -514,14 +500,13 @@ main(int argc, char **argv)
                 case 454:
                 case 455:
                 case 456:
-			rumpified = true;
-			break;
-                case 457:
-			//args[3]=fparr2
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 457:/*SYS_linkat*/
+                        //args[3]=fdarr[rval]2
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 458:
                 case 459:
                 case 460:
@@ -535,41 +520,38 @@ main(int argc, char **argv)
                 case 469:
                 case 470:
                 case 471:
-                case 472:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                case 472:/*SYS_futimens*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 473:
                 case 475:
                 case 476:
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
                 case 477:
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
                 case 479:
-                case 480:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                case 480:/*SYS_fdiscard*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 483:
                 case 484:
-			rumpified = true;
-			break;
-                case 485:
-			setfp(syscall_val);
-			args[0]=fparr;
-			rumpified = true;
-			break;
+                        rumpified = true;
+                        break;
+                case 485:/*SYS_fstatvfs190*/
+                        args[0]=fdarr[rval];
+                        rumpified = true;
+                        break;
                 case 486:
                 case 499:
                         rumpified = true;
-			break;
+                        break;
                 default:
                         rumpified = false;
-			break;
+                        break;
                 }
 
 #ifdef DEBUG
@@ -580,17 +562,18 @@ main(int argc, char **argv)
 
                 if (!rumpified)
                         continue;
-		
-	
+                
+        
 #ifdef DEBUG
-		FILE *fp = fopen("/tmp/crashlog.txt.3","a+");
-		fprintf(fp,"__syscall(%" PRIu32 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", \
-			%#" PRIx64 ", %#" PRIx64 ", %" PRIx64 ", %#" PRIx64 ")\n", syscall_val,  
-		       		args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-		fclose(fp);
+                FILE *fp = fopen("/tmp/crashlog.txt.3","a+");
+                fprintf(fp,"__syscall(%" PRIu32 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", %#" PRIx64 ", \
+                        %#" PRIx64 ", %#" PRIx64 ", %" PRIx64 ", %#" PRIx64 ")\n", syscall_val,  
+                                args[0],args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+                fclose(fp);
 #endif
 
-		rump_syscall(syscall_number, &args, sizeof(args), retval);
-	}
-	return 0;
+                rump_syscall(syscall_number, &args, sizeof(args), retval);
+        }
+        return 0;
 }
+
