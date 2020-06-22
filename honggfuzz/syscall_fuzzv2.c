@@ -44,7 +44,7 @@ honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out
 #include <netinet/in.h>
 
 #define DEBUG 1
-
+#define STDIN 1
 #define TPATH "/tmp/datbuf"
 
 #ifdef __cplusplus
@@ -69,7 +69,9 @@ int Initialized=0;
 
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
+#ifndef STDIN
 EXTERN void HF_ITER(uint8_t **buf, size_t *len);
+#endif
 EXTERN void HF_MEMGET(void *dst, size_t len);
 
 int sockfd;
@@ -96,9 +98,19 @@ void Initialize()
         for (size_t i = 0; i < 0xff; i++) 
                 fdarr[i] = rump_sys_open("/tmp/tmpfile",O_RDWR|O_CREAT);
 }
+#ifdef STDIN
+void HF_ITER(uint8_t** buf_ptr, size_t* len_ptr) {
+        uint8_t ret[1];
+        ret[0] = getchar();
+        *buf_ptr = (uint8_t *)ret;
+        *len_ptr = (size_t)sizeof(ret[0]);
+        return;
+}
+#endif
+
+
 
 EXTERN int
-		printf("here -- -- - -- - --  %x",syscall_number);
 raise(int num)
 {
         exit(0);
@@ -213,20 +225,21 @@ main(int argc, char **argv)
                 register_t retval[2];
                 uint16_t syscall_number;
                 HF_MEMGET(&syscall_number, 2);
-
                 uint16_t syscall_val = syscall_number & 511;
         
                 uint64_t args[8];
                 HF_MEMGET(&args[0], 8*sizeof(uint64_t));
                 //Select file descriptor and seek to a random offset.
-		int rval;
-		char *temp;
-	       	HF_MEMGET(temp,1);
-		rval = (int)temp;
-		int seek_val = random() % 0x7d0;
+                int rval,seek_val;
+                char *temp, *temp1;
+                HF_MEMGET(&temp,1);
+		HF_MEMGET(&temp1,1);
+                rval = (int)temp;
+		seek_val = (int)temp1;
+                seek_val = seek_val % 2000;
                 rump_sys_lseek(fdarr[rval],seek_val,SEEK_SET);
                 
-		bool rumpified;
+                bool rumpified;
                 switch (syscall_val) {
                 case 3: /*SYS_read*/
                         args[0]=fdarr[rval];
@@ -576,4 +589,3 @@ main(int argc, char **argv)
         }
         return 0;
 }
-
