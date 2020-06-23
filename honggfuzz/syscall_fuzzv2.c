@@ -73,7 +73,7 @@ static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 void HF_ITER(uint8_t **buf, size_t *len) {
         uint8_t ret[1];
 	ret[0] = getchar();
-        *buf = (uint8_t)ret;
+        *buf = (uint8_t *)ret;
         *len = (size_t)sizeof(ret);
         return;
 }
