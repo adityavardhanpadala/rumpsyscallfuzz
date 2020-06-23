@@ -31,20 +31,20 @@ honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/lwp.h>
 #include <sys/socket.h>
+
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include <ufs/ufs/ufsmount.h>
-#include <netinet/in.h>
 
 #define DEBUG 1
-#define STDIN 1
+#define CRASH_REPR 1
 #define TPATH "/tmp/datbuf"
 
 #ifdef __cplusplus
@@ -69,12 +69,12 @@ int Initialized=0;
 
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
-#ifdef STDIN
-void HF_ITER(uint8_t **buf_ptr, size_t* len_ptr) {
+#ifdef CRASH_REPR
+void HF_ITER(uint8_t **buf, size_t *len) {
         uint8_t ret[1];
-        ret[0] = getchar();
-        *buf_ptr = (uint8_t *)ret;
-        *len_ptr = (size_t)sizeof(ret[0]);
+	ret[0] = getchar();
+        *buf = (uint8_t)ret;
+        *len = (size_t)sizeof(ret);
         return;
 }
 #else
@@ -84,8 +84,6 @@ EXTERN void HF_ITER(uint8_t **buf, size_t *len);
 EXTERN void HF_MEMGET(void *dst, size_t len);
 
 int sockfd;
-struct sockaddr_in server_address;
-struct ufs_args args;
 int fdarr[0xff];
 
 static
