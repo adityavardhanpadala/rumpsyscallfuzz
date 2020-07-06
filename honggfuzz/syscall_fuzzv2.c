@@ -44,7 +44,7 @@ honggfuzz -E LIBC_UBSAN=a -P -f corpus/ -- ./a.out
 #include <stdbool.h>
 
 #define DEBUG 1
-#define CRASH_REPR 1
+//#define CRASH_REPR 1
 #define TPATH "/tmp/datbuf"
 
 #ifdef __cplusplus
@@ -71,7 +71,7 @@ static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef CRASH_REPR
 void HF_ITER(uint8_t **buf, size_t *len) {
-        uint8_t ret[1];
+        static uint8_t ret[1];
 	ret[0] = getchar();
         *buf = (uint8_t *)ret;
         *len = (size_t)sizeof(ret);
@@ -212,6 +212,14 @@ HF_MEMGET(void *dst, size_t len)
 }
 
 int
+get_u8()
+{
+	static uint8_t ret;
+	HF_MEMGET(&ret,1);
+	return ret;
+}
+
+int
 main(int argc, char **argv)
 {
         if(!Initialized){
@@ -227,34 +235,21 @@ main(int argc, char **argv)
                 uint64_t args[8];
                 HF_MEMGET(&args[0], 8*sizeof(uint64_t));
                 
-		//Select file descriptor and seek to a random offset.
-                int rval,seek_val;
-                char *temp, *temp1;
-                
-		HF_MEMGET(&temp,1);
-		HF_MEMGET(&temp1,1);
-		
-		rval = (int)temp;
-		seek_val = (int)temp1;
-                seek_val = seek_val % 2000;
-                
-		rump_sys_lseek(fdarr[rval],seek_val,SEEK_SET);
-                
                 bool rumpified;
                 switch (syscall_val) {
                 case 3: /*SYS_read*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 4:/*SYS_write*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 5:/*SYS_open*/
                         rumpified = true;
                         break;
                 case 6:/*SYS_close*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 9:
@@ -263,7 +258,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 13:/*SYS_fchdir*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 14:
@@ -285,7 +280,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 35:/*SYS_chflags*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 36:
@@ -293,7 +288,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 41:/*SYS_dup*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 42:
@@ -305,7 +300,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 54:/*SYS_ioctl*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 56:
@@ -321,7 +316,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 92:/*SYS_fcntl*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 93:
@@ -339,7 +334,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 124:/*SYS_fchmod*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 126:
@@ -348,7 +343,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 131:/*SYS_flock*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 132:
@@ -364,7 +359,7 @@ main(int argc, char **argv)
                         break;
                 case 173:
                 case 174:/*SYS_pwrite*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 181:
@@ -378,21 +373,21 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 199:/*SYS_lseek*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 200:
                         rumpified = true;
                         break;
                 case 201:/*SYS_truncate*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 202:
                         rumpified = true;
                         break;
                 case 206:/*SYS_compat_50_futimes*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 207:
@@ -433,7 +428,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 345:/*SYS_compat_50_kevent*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 354:
@@ -502,7 +497,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 440:/*SYS_fstat50*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 441:
@@ -518,7 +513,7 @@ main(int argc, char **argv)
                         break;
                 case 457:/*SYS_linkat*/
                         //args[3]=fdarr[rval]2
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 458:
@@ -535,7 +530,7 @@ main(int argc, char **argv)
                 case 470:
                 case 471:
                 case 472:/*SYS_futimens*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 473:
@@ -548,7 +543,7 @@ main(int argc, char **argv)
                         break;
                 case 479:
                 case 480:/*SYS_fdiscard*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 483:
@@ -556,7 +551,7 @@ main(int argc, char **argv)
                         rumpified = true;
                         break;
                 case 485:/*SYS_fstatvfs190*/
-                        args[0]=fdarr[rval];
+                        args[0]=get_u8();
                         rumpified = true;
                         break;
                 case 486:
