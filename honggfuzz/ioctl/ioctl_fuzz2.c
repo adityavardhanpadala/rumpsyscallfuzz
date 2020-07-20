@@ -1782,13 +1782,11 @@ main(int argc, char **argv)
 
 			uint16_t syscall_val = syscall_number & 511;
 	
-			rump_sys_ioctl(get_u8(), 0x40046679);
-			/*	
-			switch (syscall_val) {
-	                case 54:
-				rump_sys_ioctl(get_u8(), 0x40046679);
+                	switch (syscall_val) {
+	                case 54: /* ioctl */
+				rump_sys_ioctl(get_u8(), get_ioctl_request());
 				break;
-	                case 90: 
+	                case 90: /* dup2 */
 				rump_sys_dup2(get_u8(), get_u8());
 				break;
 	                case 453:
@@ -1798,7 +1796,6 @@ main(int argc, char **argv)
 				}
 				break;
 			}
-			*/
                 }
 	}
 	return 0;
