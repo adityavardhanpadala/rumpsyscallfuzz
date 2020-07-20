@@ -78,7 +78,8 @@ static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 #ifdef CRASH_REPR
 void HF_ITER(uint8_t **buf, size_t *len) {
         static uint8_t ret[1];
-	ret[0] = getchar();
+	//ret[0] = getchar();
+	ret[0] = getch();
         *buf = (uint8_t *)ret;
         *len = (size_t)sizeof(ret);
         return;
@@ -1720,6 +1721,7 @@ void Iteration(void)
 	for (fd = 0; fd < 100; fd += 2) {
 		int buf[2];
 		rump_sys_pipe2(buf, get_pipe2_flags());
+		rump_sys_dup2(buf[1], buf[0]);
 	}
 	for (fd = 100; fd < 255; fd++) {
 		rump_sys_open("/tmp/file", O_RDONLY);
@@ -1782,7 +1784,7 @@ main(int argc, char **argv)
 	
                 	switch (syscall_val) {
 	                case 54: /* ioctl */
-				rump_sys_ioctl(get_u8(), get_ioctl_request());
+				rump_sys_ioctl(get_u8(), 0x40046679);
 				break;
 	                case 90: /* dup2 */
 				rump_sys_dup2(get_u8(), get_u8());
