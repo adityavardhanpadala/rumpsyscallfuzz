@@ -49,8 +49,9 @@ and pass to honggfuzz: --rlimit_core=1000
 #include <unistd.h>
 #include <dlfcn.h>
 
+#define max_size 16384
 //#define DEBUG 0
-//#define CRASH_REPR
+#define CRASH_REPR 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,16 +73,15 @@ static bool exhausted;
 #endif
 
 static int Initialized=0;
+static char* data;
+
 
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef CRASH_REPR
 void HF_ITER(uint8_t **buf, size_t *len) {
-        static uint8_t ret[1];
-	//ret[0] = getchar();
-	ret[0] = getch();
-        *buf = (uint8_t *)ret;
-        *len = (size_t)sizeof(ret);
+        *buf = (uint8_t *)data;
+        *len = max_size;
         return;
 }
 #else
@@ -1735,6 +1735,12 @@ main(int argc, char **argv)
 		Initialize();
 		Initialized=1;
 	}
+
+#ifdef CRASH_REPR
+	FILE *fp = fopen(argv[1], "r+");
+	data = malloc(max_size);
+	fread(data, max_size, 1, fp);
+#endif	
 
 	for (;;) {
         	HF_ITER(&buf, &buflen);
