@@ -1721,7 +1721,6 @@ void Iteration(void)
 	for (fd = 0; fd < 100; fd += 2) {
 		int buf[2];
 		rump_sys_pipe2(buf, get_pipe2_flags());
-		rump_sys_dup2(buf[1], buf[0]);
 	}
 	for (fd = 100; fd < 255; fd++) {
 		rump_sys_open("/tmp/file", O_RDONLY);
