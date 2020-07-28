@@ -76,6 +76,7 @@ static int Initialized=0;
 static char* data;
 
 
+
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef CRASH_REPR
@@ -89,9 +90,49 @@ EXTERN void HF_ITER(uint8_t **buf, size_t *len);
 #endif
 EXTERN void HF_MEMGET(void *dst, size_t len);
 
+char* Iteration_code = 
+"static \n"
+"void Iteration(void)\n"
+"{\n"
+"        int fd;\n"
+"        rump_sys_fcntl(0, F_CLOSEM);\n"
+"        for (fd = 0; fd < 100; fd += 2) {\n"
+"                int buf[2];\n"
+"                rump_sys_pipe2(buf, get_pipe2_flags());\n"
+"        }\n"
+"        for (fd = 100; fd < 255; fd++) {\n"
+"                rump_sys_open("//tmp//file", O_RDONLY);\n"
+"        }\n"
+"}\n";
+
+char* Initialize_code =
+"static\n"
+"void Initialize(void)\n"
+"{\n"
+"        if(rump_init() != 0)\n"
+"                __builtin_trap();\n"
+"}\n";
+
+
+void
+print_header()
+{
+	FILE *fp = fopen("/tmp/repro.c","a+");
+	fprintf(fp,"#include <sys/types.h>\n");
+	fprintf(fp,"#include <sys/ioctl.h>\n");
+	fprintf(fp,"#include <rump/rump.h>\n");
+	fprintf(fp,"#include <rump/rump_syscalls.h>\n");
+	fprintf(fp,"%s%s",Iteration_code,Initialize_code);
+	fprintf(fp,"int\nmain()\n{\nint buf[2];\nInitialize();\nIteration();\n");
+	fclose(fp);
+}
+
 static
 void Initialize(void)
 {
+#ifdef CRASH_REPR
+	print_header();
+#endif
 	// Initialise the rumpkernel only once.
 	if(rump_init() != 0)
 		__builtin_trap();
@@ -1739,6 +1780,7 @@ main(int argc, char **argv)
 	FILE *fp = fopen(argv[1], "r+");
 	data = malloc(max_size);
 	fread(data, max_size, 1, fp);
+	fclose(fp);
 #endif	
 
 	for (;;) {
@@ -1789,15 +1831,37 @@ main(int argc, char **argv)
 	
                 	switch (syscall_val) {
 	                case 54: /* ioctl */
+				{
+#ifdef CRASH_REPR
+				FILE *fp = fopen("/tmp/repro.c","a+");
+			       	fprintf(fp, "rump_sys_ioctl(%" PRIu8 ", %" PRIu64 ");\n",get_u8(),get_ioctl_request());
+				fclose(fp);
+#else	
 				rump_sys_ioctl(get_u8(), get_ioctl_request());
+#endif
+				}
 				break;
 	                case 90: /* dup2 */
+				{
+#ifdef CRASH_REPR
+				FILE *fp = fopen("/tmp/repro.c","a+");
+			       	fprintf(fp, "rump_sys_dup2(%" PRIu8 ", %" PRIu8 ");\n",get_u8(),get_u8());
+				fclose(fp);
+#else
 				rump_sys_dup2(get_u8(), get_u8());
+#endif
+				}
 				break;
 	                case 453:
 				{
 				int buf[2];
-				rump_sys_pipe2(buf, get_pipe2_flags());
+#ifdef CRASH_REPR
+				FILE *fp = fopen("/tmp/repro.c","a+");
+			       	fprintf(fp, "rump_sys_pipe2(buf, %" PRIu32 ");\n",get_pipe2_flags());
+				fclose(fp);
+#else
+				rump_sys_pipe2(buf,get_pipe2_flags());
+#endif
 				}
 				break;
 			}
