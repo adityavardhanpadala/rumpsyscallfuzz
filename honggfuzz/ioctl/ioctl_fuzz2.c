@@ -101,7 +101,7 @@ char* Iteration_code =
 "                rump_sys_pipe2(buf, get_pipe2_flags());\n"
 "        }\n"
 "        for (fd = 100; fd < 255; fd++) {\n"
-"                rump_sys_open("//tmp//file", O_RDONLY);\n"
+"                rump_sys_open(\"//tmp//file\", O_RDONLY);\n"
 "        }\n"
 "}\n";
 
