@@ -1,4 +1,4 @@
-# My Setup
+# Setup and Usage
 
 notes on [adityapadala.com](https://adityapadala.com)
 
@@ -14,7 +14,7 @@ git clone https://github.com/NetBSD/src
 
 - Build the distribution with fuzzer coverage and required llvm toolchain.
 ```
-./build.sh -j8 -N0 -U -u -V MAKECONF=/dev/null -V MKCOMPAT=no -V MKDEBUGLIB=yes -V MKDEBUG=yes -V MKSANITIZER=yes -V USE_SANITIZER=fuzzer-no-link -V MKLLVM=yes -V MKGCC=no -V HAVE_LLVM=yes -O ../destdir distribution
+./build.sh -j8 -N0 -U -u -V MAKECONF=/dev/null -V MKCOMPAT=no -V MKDEBUGLIB=yes -V MKDEBUG=yes -V MKSANITIZER=yes -V MKLIBCSANITIZER=yes -V USE_SANITIZER=fuzzer-no-link,address -V MKLLVM=yes -V MKGCC=no -V HAVE_LLVM=yes -O /public/netbsd.fuzzer distribution
 ```
 
 - Fetch pkgsrc (if required)
@@ -29,7 +29,7 @@ add -static to COMMON_CFLAGS in honggfuzz/Makefile
 cd honggfuzz
 make install
 ```
-
+- Fuzzing
 ```
 mount -t null /dev /public/netsbd.fuzzer/destdir.amd64/dev
 mount -t null /dev/pts /public/netbsd.fuzzer/destdir.amd64/dev/pts
