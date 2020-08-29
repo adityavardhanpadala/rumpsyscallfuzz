@@ -1,14 +1,18 @@
-# Setup and Usage
+This repository hosts the code written for GSOC 2020 with NetBSD for the Project <b>Rumpkernel Syscall Fuzzing</b>.
 
-notes on [adityapadala.com](https://adityapadala.com)
+If you are not sure what a rumpkernel is then this might help [Rump Kernels](https://adityapadala.com/2020/04/01/Rump-Kernels/)
+
+Posts on NetBSD blog detailing the work I did during my coding period. 
 
 Blog Post 1 - [http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls](http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls)
 
 Blog Post 2 - [http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls1](http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls1)
 
+# Setup and Usage
+
 - Setup a NetBSD installation as detailed here [https://adityapadala.com/2020/04/20/Setting-Up-NetBSD-Kernel-Dev-Environment/](https://adityapadala.com/2020/04/20/Setting-Up-NetBSD-Kernel-Dev-Environment/)
-- ssh into the vm.
-- Now fetch the sources from either CVS or git.
+- SSH into the vm.
+- Now fetch the NetBSD sources from either CVS or git.
 ```
 export CVSROOT="anoncvs@anoncvs.NetBSD.org:/cvsroot"
 cvs checkout -A -P src
@@ -26,7 +30,7 @@ git clone https://github.com/NetBSD/src
 cd /usr && cvs -q -z2 -d anoncvs@anoncvs.NetBSD.org:/cvsroot checkout -P pkgsrc
 ```
 
-- Install honggfuzz from pkgsrc in devel/honggfuzz
+- Build honggfuzz statically
 ```
 git clone https://github.com/google/honggfuzz.git
 add -static to COMMON_CFLAGS in honggfuzz/Makefile
