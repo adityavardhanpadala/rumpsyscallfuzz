@@ -2,6 +2,10 @@
 
 notes on [adityapadala.com](https://adityapadala.com)
 
+Blog Post 1 - [http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls](http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls)
+
+Blog Post 2 - [http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls1](http://blog.netbsd.org/tnf/entry/gsoc_reports_fuzzing_rumpkernel_syscalls1)
+
 - Setup a NetBSD installation as detailed here [https://adityapadala.com/2020/04/20/Setting-Up-NetBSD-Kernel-Dev-Environment/](https://adityapadala.com/2020/04/20/Setting-Up-NetBSD-Kernel-Dev-Environment/)
 - ssh into the vm.
 - Now fetch the sources from either CVS or git.
